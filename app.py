@@ -1,4 +1,4 @@
-from crawler import ShopeeCrawler
+from crawler import ShopeeCrawler_API
 
 import time
 
@@ -6,7 +6,7 @@ import time
 if __name__ == '__main__':
     print("hello world")
     
-    crawler = ShopeeCrawler()
+    crawler = ShopeeCrawler_API()
     terms = [
         'serum',
         # 'toner'
@@ -18,4 +18,4 @@ if __name__ == '__main__':
     # crawler.extract_comments_from_shopee_api("274028659", "5945693195")
     # crawler.craw_item("https://shopee.vn/product/274028659/5945693195")
     # crawler.extract_item_information("https://shopee.vn/product/194923909/15103850849")
-    crawler.__close_connection__()
+    # crawler.__close_connection__()

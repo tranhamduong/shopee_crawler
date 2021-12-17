@@ -23,3 +23,7 @@ SHOPEE_RATING_TYPE_LIST = {
 
 SHOPEE_API_RATINGS_MAX_REVIEWS = 59
 SHOPEE_API_RATINGS = "https://shopee.vn/api/v2/item/get_ratings?itemid={}&offset={}&shopid={}&limit={}"
+
+SHOPEE_API_SEARCH_RElEVANCY = "https://shopee.vn/api/v4/search/search_items?by=relevancy&keyword={}&limit=60&newest={}&order=desc&page_type=search"
+
+SHOPEE_PRODUCT_INFORMATION = "https://shopee.vn/api/v4/item/get?shopid={}&itemid={}"
