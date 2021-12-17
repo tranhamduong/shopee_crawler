@@ -13,7 +13,7 @@ import json
 import os 
 from tqdm import tqdm
 from progress.spinner import Spinner
-
+import string 
 
 import config
 import utils
@@ -25,35 +25,39 @@ class ShopeeCrawler_API():
         pass
     
     
-    def crawl_by_terms(self, term):
-        offset= 0
+    def crawl_by_terms(self, term, lst_itemid):
         
+        offset= 0
+        os.makedirs(os.path.join('output', term), exist_ok=True)
+        lst_existed_title = os.listdir(os.path.join('output', term))
         limit = 60
-        lst_itemid = []
-        for i in range(0, 100): 
+        
+        if term == 'skincare': 
+            return
+        
+        for i in range(0, 5): 
             url = config.SHOPEE_API_SEARCH_RElEVANCY.format(term, offset)    
             res = requests.get(url=url).json()   
             items = res['items']
-        
-            print(len(items))
-            
+            print("Fetching for term {}/ Page {}".format(term,i + 1) )           
             for item in items: 
                 shop_id = str(item['item_basic']['shopid']) 
                 item_id = str(item['item_basic']['itemid'])
                 if shop_id + '-' + item_id in lst_itemid:
                     continue
-                    
-                self.crawl_item(shop_id, item_id)
+                
+                print("Fetching for item {}".format(utils.make_product_url(shop_id, item_id)))
+                
+                item_dict = self.crawl_item(shop_id, item_id, lst_existed_title)
+                if item_dict:
+                    self.write_to_file(term, item_dict)
+                    lst_itemid.add(shop_id + '-' + item_id)
             
             offset += limit
             
-        
-        
-       
     
     
-    
-    def crawl_item(self, shop_id, item_id):
+    def crawl_item(self, shop_id, item_id, lst_existed_title):
         
         item_dict = dict()
         
@@ -63,6 +67,13 @@ class ShopeeCrawler_API():
         
         # Get item basic information
         title, desc, brand, rating_stars, breadcrumbs = self.extract_item_information(shop_id, item_id)
+        
+        if title + '.json' in lst_existed_title:
+            return None
+        
+        if title.translate(str.maketrans('', '', string.punctuation)) in lst_existed_title:
+            return None
+        
         item_dict['title'] = title 
         item_dict['breadcrumb'] = breadcrumbs
         item_dict['desc'] = desc 
@@ -76,19 +87,25 @@ class ShopeeCrawler_API():
         
     
     def write_to_file(self, term, item_dict): 
-        with open('output/' + term + '/' + item_dict['title'] + '.json', 'w', encoding='utf8') as fp:
-            json.dump(item_dict, fp, indent=4, ensure_ascii=False)
+        filepath = item_dict['title'].translate(str.maketrans('', '', string.punctuation))
+        try:
+            with open('output/' + term + '/' + filepath + '.json', 'w', encoding='utf8') as fp:
+                json.dump(item_dict, fp, indent=4, ensure_ascii=False)        
+        except OSError as e:
+            print(e)
             
         
     def extract_item_information(self, shop_id, item_id):
         try: 
             url = config.SHOPEE_PRODUCT_INFORMATION.format(shop_id, item_id)
-            result = requests.get(url).json
+            result = requests.get(url).json()
             
             return result['data']['name'], result['data']['description'], result['data']['brand'], result['data']['item_rating']['rating_star'], [item['display_name'] for item in result['data']['fe_categories']]
-        except: 
+        except Exception as e: 
+            print(e)
             print("ERROR with this: ", utils.make_product_url(shop_id, item_id))
-            
+        finally:
+            time.sleep(0.5)
     # def extract_item_information_use_bsoup(self, product_url):
     #     page = urllib.request.urlopen(product_url)
     #     soup = BeautifulSoup(page, 'html.parser')
@@ -120,34 +137,37 @@ class ShopeeCrawler_API():
         first_call = requests.get(url = url).json()
         
         maximum_reviews = first_call['data']['item_rating_summary']['rating_total']
-        
-        if offset + config.SHOPEE_API_RATINGS_MAX_REVIEWS < maximum_reviews:
-            while offset + config.SHOPEE_API_RATINGS_MAX_REVIEWS < maximum_reviews:
+        try:
+            if offset + config.SHOPEE_API_RATINGS_MAX_REVIEWS < maximum_reviews:
+                while offset + config.SHOPEE_API_RATINGS_MAX_REVIEWS < maximum_reviews:
+                    url = config.SHOPEE_API_RATINGS.format(item_id, offset, shop_id, config.SHOPEE_API_RATINGS_MAX_REVIEWS)
+                    print(url)
+                    spinner.next()
+                    ratings = requests.get(url= url).json()        
+                    for rating in ratings['data']['ratings']: 
+                        if not rating['comment']:
+                            continue
+                        reviews[rating['rating_star'] - 1].append({
+                            "comment": rating['comment'],
+                            "tags": rating['tags']
+                        })
+                    
+                    offset += config.SHOPEE_API_RATINGS_MAX_REVIEWS
+                    # time.sleep(0.5)
+            else:
                 url = config.SHOPEE_API_RATINGS.format(item_id, offset, shop_id, config.SHOPEE_API_RATINGS_MAX_REVIEWS)
-                spinner.next()
+                    
                 ratings = requests.get(url= url).json()        
                 for rating in ratings['data']['ratings']: 
-                    if not rating['comment']:
-                        continue
                     reviews[rating['rating_star'] - 1].append({
                         "comment": rating['comment'],
                         "tags": rating['tags']
                     })
                 
                 offset += config.SHOPEE_API_RATINGS_MAX_REVIEWS
-                time.sleep(0.5)
-        else:
-            url = config.SHOPEE_API_RATINGS.format(item_id, offset, shop_id, config.SHOPEE_API_RATINGS_MAX_REVIEWS)
-                
-            ratings = requests.get(url= url).json()        
-            for rating in ratings['data']['ratings']: 
-                reviews[rating['rating_star'] - 1].append({
-                    "comment": rating['comment'],
-                    "tags": rating['tags']
-                })
-            
-            offset += config.SHOPEE_API_RATINGS_MAX_REVIEWS
-            time.sleep(0.5)
+            # time.sleep(0.5)
+        except Exception as e:
+            print(e)
         
         return reviews
         
