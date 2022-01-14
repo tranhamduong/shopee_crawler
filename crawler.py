@@ -32,27 +32,43 @@ class ShopeeCrawler_API():
         lst_existed_title = os.listdir(os.path.join('output', term))
         limit = 60
         
-        if term == 'skincare': 
-            return
+        stop_flag = 1
         
-        for i in range(0, 5): 
-            url = config.SHOPEE_API_SEARCH_RElEVANCY.format(term, offset)    
-            res = requests.get(url=url).json()   
+        for i in range(0, 90):
+            if stop_flag >= 3: 
+                break
+            try: 
+                url = config.SHOPEE_API_SEARCH_RElEVANCY.format(term, offset)    
+                res = requests.get(url=url).json()
+            except: 
+                time.sleep(5)
+                print("HARD EXCEPTION")
+                url = config.SHOPEE_API_SEARCH_RElEVANCY.format(term, offset)    
+                res = requests.get(url=url).json()
+                
+            if res['error']:
+                stop_flag += 1 
+                continue   
+
             items = res['items']
-            print("Fetching for term {}/ Page {}".format(term,i + 1) )           
+            spn = Spinner("Fetching for term {}/ Page {}".format(term,i + 1) )           
             for item in items: 
+                spn.next()
+
                 shop_id = str(item['item_basic']['shopid']) 
                 item_id = str(item['item_basic']['itemid'])
                 if shop_id + '-' + item_id in lst_itemid:
                     continue
                 
-                print("Fetching for item {}".format(utils.make_product_url(shop_id, item_id)))
-                
-                item_dict = self.crawl_item(shop_id, item_id, lst_existed_title)
-                if item_dict:
-                    self.write_to_file(term, item_dict)
-                    lst_itemid.add(shop_id + '-' + item_id)
-            
+                # print("Fetching for item {}".format(utils.make_product_url(shop_id, item_id)))
+                try:
+                    item_dict = self.crawl_item(shop_id, item_id, lst_existed_title)
+                    if item_dict:
+                        self.write_to_file(term, item_dict)
+                        lst_itemid.add(shop_id + '-' + item_id)
+                except:
+                    continue
+
             offset += limit
             
     
@@ -87,12 +103,15 @@ class ShopeeCrawler_API():
         
     
     def write_to_file(self, term, item_dict): 
-        filepath = item_dict['title'].translate(str.maketrans('', '', string.punctuation))
+        # filepath = item_dict['title'].translate(str.maketrans('', '', string.punctuation))
+        filepath = item_dict['item_id']
         try:
             with open('output/' + term + '/' + filepath + '.json', 'w', encoding='utf8') as fp:
                 json.dump(item_dict, fp, indent=4, ensure_ascii=False)        
         except OSError as e:
             print(e)
+        finally:
+            time.sleep(1)
             
         
     def extract_item_information(self, shop_id, item_id):
@@ -141,7 +160,7 @@ class ShopeeCrawler_API():
             if offset + config.SHOPEE_API_RATINGS_MAX_REVIEWS < maximum_reviews:
                 while offset + config.SHOPEE_API_RATINGS_MAX_REVIEWS < maximum_reviews:
                     url = config.SHOPEE_API_RATINGS.format(item_id, offset, shop_id, config.SHOPEE_API_RATINGS_MAX_REVIEWS)
-                    print(url)
+                    # print(url)
                     spinner.next()
                     ratings = requests.get(url= url).json()        
                     for rating in ratings['data']['ratings']: 

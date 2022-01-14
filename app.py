@@ -1,6 +1,8 @@
 from crawler import ShopeeCrawler_API
 import utils
 
+import config 
+import requests
 import time
 
 
@@ -10,10 +12,10 @@ if __name__ == '__main__':
     crawler = ShopeeCrawler_API()
     terms = [
         "skincare",
-        "sửa rửa mặt", 
-        "toner", 
-        "serum", 
-        "essence"
+        # "sửa rửa mặt", 
+        # "toner", 
+        # "serum", 
+        # "essence"
     ]
     
     lst_itemid = utils.get_existed_item_list()
