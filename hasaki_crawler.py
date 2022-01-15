@@ -32,8 +32,8 @@ class HasakiCrawler_API():
     
     
     def crawl(self, lst_itemid):
-        start_index = 25000
-        end_index = 50000
+        start_index = 95163
+        end_index = 100000
         
         for i in tqdm(range(start_index, end_index)):
             # spinner.next(text=str(i))
