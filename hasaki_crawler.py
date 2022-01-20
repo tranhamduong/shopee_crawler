@@ -116,7 +116,46 @@ class HasakiCrawler_API():
         return title, desc, brand, avg_star, breadcrumb_str, url
 
 
-    
+    def extract_faqs_from_api(self, item_id, faqs = dict()):
+        
+
+        offset = 0
+        url = config.HASAKI_API_FAQS.format(item_id, offset)    
+
+        is_continue = True
+
+        while is_continue: 
+            url = config.HASAKI_API_FAQS.format(item_id, offset)
+            response = requests.get(url = url).json()
+            total_item = int(response['data']['total_item'])
+            if total_item == 0:
+                is_continue = False
+            else: 
+                if item_id not in faqs:
+                    faqs[item_id] = []
+                    
+            # if ok --> continue
+            soup = BeautifulSoup(response['data']['html'], 'html.parser')
+            for link in soup.find_all("div", {"class": "item_quest"}):
+                question = link.find("div", {"class": "txt_quest"}).get_text()
+                if question and question != " ": 
+                    faqs[item_id].append(
+                        {
+                            "question": question,
+                            "answer": []
+                        }
+                        )
+                
+                for answer in link.find_all("div", {"class": "txt_answear"}):
+                    if answer and answer != " ":
+                        faqs[item_id][-1]["answer"].append(
+                            answer.get_text().strip()
+                        )
+            offset += total_item
+        return faqs
+
+
+
     def extract_comments_from_api(self, item_id): 
         reviews = [
             [], #1star
@@ -160,7 +199,14 @@ class HasakiCrawler_API():
 if __name__ == '__main__':
     lst_itemId = set()
     crawler = HasakiCrawler_API()
-    # crawler.extract_comments_from_api(item_id="9740")
-    crawler.crawl(lst_itemId)
+    with open('hasaki_item_ids.txt', 'r') as f:
+        ids = f.read().splitlines()[17500:]
+        for _id in tqdm(ids):
+            faqs = crawler.extract_faqs_from_api(item_id=_id)
+        
+    with open('output_hasaki_faqs/result_8.json', 'w', encoding='utf8') as fp:
+        json.dump(faqs, fp, ensure_ascii=False)
+        
+    # crawler.crawl(lst_itemId)
 
     

@@ -27,3 +27,7 @@ SHOPEE_API_RATINGS = "https://shopee.vn/api/v2/item/get_ratings?itemid={}&offset
 SHOPEE_API_SEARCH_RElEVANCY = "https://shopee.vn/api/v4/search/search_items?by=relevancy&keyword={}&limit=60&newest={}&order=desc&page_type=search"
 
 SHOPEE_PRODUCT_INFORMATION = "https://shopee.vn/api/v4/item/get?shopid={}&itemid={}"
+
+HASAKI_API_RATINGS = "https://hasaki.vn/ajax?api=product.getRatingMore&id={}&offset={}&sort=date"
+HASAKI_URL_PRODUCT = "https://hasaki.vn/san-pham/abc-{}.html"
+HASAKI_API_FAQS = "https://hasaki.vn/ajax?api=product.getQuestionMore&id={}&offset={}"
