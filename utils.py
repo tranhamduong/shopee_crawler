@@ -1,35 +1,5 @@
-import config
-import os 
-import json 
+import config 
 
-def get_product_url(url):
-    ab= url.split("-i.")[-1].split("?")[0].split(".")
+def make_shopee_product_url(shop_id, item_id):
+    return config.SHOPPE_PRODUCT_URL + str(shop_id) + '/' + str(item_id) + '/'
     
-    return config.SHOPPE_PRODUCT_URL + ab[0] + '/' + ab[1] + '/'
-
-def extract_from_url(url): 
-    # url = https://shopee.vn/product/292513909/3646115183/
-    
-    return url.split("/")[4], url.split("/")[5]
-
-def make_product_url(shop_id, item_id):
-    return config.SHOPEE_BASE_URL + 'product/' + str(shop_id) + '/' + str(item_id) + '/'
-
-
-def get_existed_item_list():
-    existed_items = set()
-    subfolders = os.listdir('output/')
-    for folder in subfolders: 
-        filenames = os.listdir(os.path.join('output', folder))
-        
-        for filename in filenames:
-            with open(os.path.join('output', folder, filename), 'r', encoding="utf8") as f:
-                data = json.load(f)
-                existed_items.add(data['shop_id'] + '-' + data['item_id'])
-                
-    return existed_items
-
-if __name__ == '__main__':
-    # x = process_url('https://shopee.vn/Serum-gi%E1%BA%A3m-m%E1%BB%A5n-th%C3%A2m-r%E1%BB%97-Seimy-Skin-7-Days-C%C3%B4ng-d%E1%BB%A5ng-5-trong-1-hi%E1%BB%87u-qu%E1%BA%A3-sau-7-ng%C3%A0y-i.292513909.3646115183?sp_atk=da5c1dae-1387-47b6-9360-69f0b88d2f46')
-    # print(x)
-    pass 

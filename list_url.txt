@@ -1,0 +1,1 @@
+https://shopee.vn/api/v4/recommend/recommend?bundle=shop_page_homepage&limit=90&offset=0&shopid=574100363&upstream=search
